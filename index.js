@@ -18,6 +18,16 @@ io.on("connection", (socket) => {
   });
 });
 
+// namespech
+const chatNameSpece = io.of("/chat");
+
+chatNameSpece.on("connection", (socket) => {
+  console.log("user connected to /chat namespec");
+
+  socket.on("message", (msg) => {
+    chatNameSpece.emit("message", msg);
+  });
+});
 app.get("/", function (req, res) {
   res.sendFile(path.join(__dirname, "/index.html"));
 });

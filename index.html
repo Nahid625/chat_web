@@ -2,23 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Socket.io Client</title>
+    <title>Socket.io Namespaces</title>
 </head>
 <body>
-    <h1>Socket.io Connection Test</h1>
-    <p>Check the browser console (F12) to see incoming events!</p>
+    <h1>Socket.io Namespace Test</h1>
+    <p>Check the browser console (F12) to see connection logs!</p>
+    
+    <input id="chatInput" type="text" placeholder="Type a message for /chat">
+    <button onclick="sendMessage()">Send to /chat</button>
 
     <!-- Socket.io client library script -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-    
-        const socket = io();
-
-      
-        socket.on("hey", (data) => {
-            console.log("Server says:", data);
-            alert("Received from server: " + data);
+        // ১. ডিফল্ট কানেকশন (/)
+        const defaultSocket = io();
+        defaultSocket.on("connect", () => {
+            console.log("Connected to default namespace. ID:", defaultSocket.id);
         });
+
+        // ২. /chat Namespace কানেকশন
+        const chatSocket = io("/chat");
+        chatSocket.on("connect", () => {
+            console.log("Connected to /chat namespace. ID:", chatSocket.id);
+        });
+
+        // সার্ভার থেকে মেসেজ রিসিভ করা
+        chatSocket.on("message", (msg) => {
+            console.log("New message from /chat:", msg);
+            alert("New message: " + msg);
+        });
+
+        // মেসেজ পাঠানোর ফাংশন
+        function sendMessage() {
+            const input = document.getElementById("chatInput");
+            chatSocket.emit("message", input.value);
+            input.value = "";
+        }
     </script>
 </body>
 </html>
