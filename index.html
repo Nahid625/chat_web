@@ -1,3 +1,24 @@
-<html>
-  hallow world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Socket.io Client</title>
+</head>
+<body>
+    <h1>Socket.io Connection Test</h1>
+    <p>Check the browser console (F12) to see incoming events!</p>
+
+    <!-- Socket.io client library script -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    
+        const socket = io();
+
+      
+        socket.on("hey", (data) => {
+            console.log("Server says:", data);
+            alert("Received from server: " + data);
+        });
+    </script>
+</body>
 </html>
