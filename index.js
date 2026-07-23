@@ -7,31 +7,58 @@ const { Server } = require("socket.io");
 const path = require("path");
 const io = new Server(expressServer);
 
-io.on("connection", (socket) => {
-  console.log(socket.id);
-
-  socket.broadcast.emit("hey", "there");
-
-  socket.on("disconnect", () => {
-    socket.disconnect();
-    console.log("user Disconnected");
-  });
-});
-
 // namespech
 const chatNameSpece = io.of("/chat");
 
 chatNameSpece.on("connection", (socket) => {
-  console.log("user connected to /chat namespec");
+  try {
+    console.log(socket.id);
 
-  socket.on("message", (msg) => {
-    chatNameSpece.emit("message", msg);
+    socket.on("join_room", (roomID) => {
+      if (!roomID) {
+        return socket.emit("roomID is required");
+      }
+      socket.join(roomID);
+
+      const totalPerson = chatNameSpece.adapter.rooms.get(roomID)?.size || 0;
+      chatNameSpece
+        .to(roomID)
+        .emit("message", totalPerson + "hallow guys how are you ");
+
+      chatNameSpece.in(roomID).emit("sleep", "hello");
+      console.log("Users in room:", totalPerson);
+    });
+
+    socket.on("message", (msg, roomId) => {
+      if (!msg || !roomId) {
+        return socket.emit("msg and roomId required Perameter");
+      }
+      socket.to(roomId).emit("message", msg);
+    });
+   
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const chat_w_room = io.of("/dirrect_chat");
+
+chat_w_room.on("connection", (socket) => {
+  console.log(socket.id);
+
+  socket.on("send_message", (msg) => {
+    if (!msg) {
+      return socket.emit("error", "Message is required");
+    }
+
+    chat_w_room.emit("receive_message", msg);
   });
 });
+
 app.get("/", function (req, res) {
   res.sendFile(path.join(__dirname, "/index.html"));
 });
 
-expressServer.listen(3000, () => {
-  console.log("server is running on http://localhost:3000");
+expressServer.listen(4000, () => {
+  console.log("server is running on http://localhost:4000");
 });

@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id            String             @id @default(uuid())
+  email         String             @unique
+  name          String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // রিলেশনস
+  conversations ConversationUser[]
+  messages      Message[]
+}
+
+model Conversation {
+  id        String             @id @default(uuid())
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  // রিলেশনস
+  users     ConversationUser[]
+  messages  Message[]
+}
+
+model ConversationUser {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+  createdAt      DateTime     @default(now())
+
+  // রিলেশনস
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId]) // একই কনভার্স যেন ডুপ্লিকেট না হয়
+}
+
+// ৩. মেসেজ টেবিল (যেখানে প্রতিটি চ্যাটের হিস্ট্রি সেভ থাকবে)
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  message        String
+  createdAt      DateTime     @default(now())
+
+  // রিলেশনস
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
