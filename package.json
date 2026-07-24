@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "@prisma/client": "^7.9.0",
     "express": "^5.2.1",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "prisma": "^7.9.0"
   }
 }
