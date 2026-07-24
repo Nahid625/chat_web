@@ -37,7 +37,36 @@ const createConverstation = async (req, res) => {
     console.log(`Enternel server error ${String(error)}`);
   }
 };
+const getConverstation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log(`user Id is this ${String(userId)}`);
 
+    const findUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        conversations: {
+          include: {
+            conversation: {
+              include: {
+                users: { select: { id: true, name: true, email: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!findUser) {
+      return res.status(400).send("user not found");
+    }
+    return res.status(200).json({
+      user: { findUser },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send(`Enternel server error : ${String(error)}`);
+  }
+};
 module.exports = {
   createConverstation,
 };
