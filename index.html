@@ -2,315 +2,242 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>3D Socket.IO Chat</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auth Tester</title>
     <style>
-      * {
-        box-sizing: border-box;
-      }
-
       body {
-        margin: 0;
-        height: 100vh;
-        overflow: hidden;
-        font-family: "Poppins", sans-serif;
-        background: radial-gradient(circle at top, #1b1b55, #050510);
-        color: white;
+        font-family: Arial, sans-serif;
+        background-color: #1e1e1e;
+        color: #fff;
+        padding: 20px;
       }
-
-      /* 3D floating objects */
-
-      .circle {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(1px);
-        animation: float 8s infinite alternate;
-      }
-
-      .c1 {
-        width: 250px;
-        height: 250px;
-        background: #00ffff55;
-        top: 10%;
-        left: 10%;
-      }
-
-      .c2 {
-        width: 350px;
-        height: 350px;
-        background: #ff00ff55;
-        bottom: 5%;
-        right: 10%;
-      }
-
-      @keyframes float {
-        from {
-          transform: translateY(0px) rotate(0deg);
-        }
-        to {
-          transform: translateY(-60px) rotate(180deg);
-        }
-      }
-
-      /* main container */
-
       .container {
-        width: 900px;
-        height: 90vh;
-
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
+        max-width: 600px;
+        margin: 0 auto;
       }
-
-      /* Glass cards */
-
       .card {
-        background: rgba(255, 255, 255, 0.08);
-
-        backdrop-filter: blur(20px);
-
-        border-radius: 25px;
-
-        padding: 25px;
-
-        box-shadow:
-          0 0 50px #0008,
-          inset 0 0 30px #ffffff15;
-
-        border: 1px solid #ffffff22;
-
-        animation: card 1s ease;
+        background: #2d2d2d;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
       }
-
-      @keyframes card {
-        from {
-          transform: translateY(100px) rotateX(30deg);
-
-          opacity: 0;
-        }
-
-        to {
-          transform: none;
-          opacity: 1;
-        }
-      }
-
-      h2 {
-        text-align: center;
-
-        background: linear-gradient(90deg, #00ffff, #ff00ff);
-
-        -webkit-background-clip: text;
-
-        color: transparent;
-      }
-
-      /* Inputs */
-
       input {
         width: 100%;
-
-        padding: 15px;
-
-        margin: 8px 0;
-
-        border: none;
-
-        outline: none;
-
-        border-radius: 15px;
-
-        background: #ffffff15;
-
-        color: white;
-
-        font-size: 16px;
-      }
-
-      button {
-        width: 100%;
-
-        padding: 15px;
-
-        border: none;
-
-        border-radius: 15px;
-
-        cursor: pointer;
-
-        font-size: 16px;
-
-        font-weight: bold;
-
-        background: linear-gradient(45deg, #00ffff, #ff00ff);
-
-        color: black;
-
-        transition: 0.3s;
-      }
-
-      button:hover {
-        transform: scale(1.05) translateY(-5px);
-
-        box-shadow: 0 0 30px #00ffff;
-      }
-
-      /* messages */
-
-      .messages {
-        height: 250px;
-
-        overflow: auto;
-
-        margin-top: 15px;
-
-        padding: 15px;
-
-        border-radius: 20px;
-
-        background: #0005;
-      }
-
-      .msg {
         padding: 10px;
-
-        margin: 8px;
-
-        border-radius: 15px;
-
-        background: linear-gradient(45deg, #ffffff22, #ffffff08);
-
-        animation: pop 0.3s;
+        margin: 10px 0;
+        border: 1px solid #444;
+        border-radius: 4px;
+        background: #3d3d3d;
+        color: #fff;
+        box-sizing: border-box;
       }
-
-      @keyframes pop {
-        from {
-          transform: scale(0.5);
-
-          opacity: 0;
-        }
-
-        to {
-          transform: scale(1);
-
-          opacity: 1;
-        }
+      button {
+        background: #4caf50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 16px;
       }
-
-      .status {
-        text-align: center;
-
-        font-size: 18px;
-
-        color: #00ffff;
+      button:hover {
+        background: #45a049;
+      }
+      .btn-blue {
+        background: #2196f3;
+        margin-top: 10px;
+      }
+      .btn-blue:hover {
+        background: #1976d2;
+      }
+      #messageBox {
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        display: none;
+      }
+      .success {
+        background: #4caf50;
+        color: white;
+      }
+      .error {
+        background: #f44336;
+        color: white;
+      }
+      pre {
+        background: #111;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
       }
     </style>
   </head>
-
   <body>
-    <div class="circle c1"></div>
-    <div class="circle c2"></div>
-
     <div class="container">
-      <!-- ROOM CHAT -->
+      <h2 style="text-align: center">API Tester</h2>
 
+      <!-- Message Box for Alerts -->
+      <div id="messageBox"></div>
+
+      <!-- SIGNUP FORM -->
       <div class="card">
-        <h2>🌌 Room Chat</h2>
-
-        <input id="room" placeholder="Enter Room ID" />
-
-        <button onclick="joinRoom()">Join Room</button>
-
-        <input id="roomMsg" placeholder="Message" />
-
-        <button onclick="sendRoom()">Send</button>
-
-        <div class="status" id="users">Users: 0</div>
-
-        <div class="messages" id="roomMessages"></div>
+        <h3>Sign Up</h3>
+        <form id="signupForm">
+          <input type="text" id="signupName" placeholder="Name (Optional)" />
+          <input type="email" id="signupEmail" placeholder="Email" required />
+          <input
+            type="password"
+            id="signupPassword"
+            placeholder="Password (Min 8 chars)"
+            required
+            minlength="8"
+          />
+          <button type="submit">Create Account</button>
+        </form>
       </div>
 
-      <!-- DIRECT CHAT -->
-
+      <!-- LOGIN FORM -->
       <div class="card">
-        <h2>⚡ Direct Chat</h2>
+        <h3>Log In</h3>
+        <form id="loginForm">
+          <input type="email" id="loginEmail" placeholder="Email" required />
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+            required
+          />
+          <button type="submit">Log In</button>
+        </form>
+      </div>
 
-        <input id="directMsg" placeholder="Global Message" />
-
-        <button onclick="sendDirect()">Broadcast</button>
-
-        <div class="messages" id="directMessages"></div>
+      <!-- PROFILE TESTER -->
+      <div class="card">
+        <h3>Test Protected Route (Get Profile)</h3>
+        <p>You must be logged in to test this.</p>
+        <button id="profileBtn" class="btn-blue">Get My Profile</button>
+        <div id="profileResult" style="margin-top: 15px; display: none">
+          <h4>Profile Data:</h4>
+          <pre id="profileData"></pre>
+        </div>
       </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-
     <script>
-      // ROOM NAMESPACE
+      // --- CONFIGURATION ---
+      // Change this if your Express routes have a prefix like '/api/users'
+      const API_BASE_URL = "http://localhost:4000";
 
-      const roomSocket = io("/chat");
-
-      let currentRoom = "";
-
-      function joinRoom() {
-        currentRoom = document.getElementById("room").value;
-
-        if (!currentRoom) return alert("Enter room");
-
-        roomSocket.emit("join_room", currentRoom);
+      // --- UI HELPER ---
+      function showMessage(msg, isError = false) {
+        const msgBox = document.getElementById("messageBox");
+        msgBox.textContent = msg;
+        msgBox.className = isError ? "error" : "success";
+        msgBox.style.display = "block";
+        setTimeout(() => (msgBox.style.display = "none"), 5000);
       }
 
-      function sendRoom() {
-        let msg = document.getElementById("roomMsg").value;
+      // --- SIGNUP LOGIC ---
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("signupName").value;
+          const email = document.getElementById("signupEmail").value;
+          const password = document.getElementById("signupPassword").value;
 
-        roomSocket.emit("message", msg, currentRoom);
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, email, password }),
+            });
 
-        addRoom("You : " + msg);
-      }
+            const data = await response.json();
 
-      roomSocket.on("message", (msg) => {
-        addRoom(msg);
-      });
+            if (response.ok) {
+              showMessage("Signup successful! You can now log in.");
+              document.getElementById("signupForm").reset();
+            } else {
+              showMessage(data.error || "Signup failed", true);
+            }
+          } catch (err) {
+            showMessage("Network error. Is your server running?", true);
+          }
+        });
 
-      roomSocket.on("sleep", (data) => {
-        document.getElementById("users").innerHTML = data;
-      });
+      // --- LOGIN LOGIC ---
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("loginEmail").value;
+          const password = document.getElementById("loginPassword").value;
 
-      function addRoom(text) {
-        let div = document.createElement("div");
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            });
 
-        div.className = "msg";
+            const data = await response.json();
 
-        div.innerHTML = text;
+            if (response.ok) {
+              // Save the JWT token to local storage so we can use it for protected routes
+              localStorage.setItem("token", data.token);
+              showMessage(
+                `Welcome back, ${data.user.name || "User"}! Token saved.`,
+              );
+              document.getElementById("loginForm").reset();
+            } else {
+              showMessage(data.error || "Login failed", true);
+            }
+          } catch (err) {
+            showMessage("Network error. Is your server running?", true);
+          }
+        });
 
-        document.getElementById("roomMessages").appendChild(div);
-      }
+      // --- GET PROFILE LOGIC (PROTECTED) ---
+      document
+        .getElementById("profileBtn")
+        .addEventListener("click", async () => {
+          const token = localStorage.getItem("token");
 
-      // DIRECT CHAT
+          if (!token) {
+            showMessage("No token found. Please log in first!", true);
+            return;
+          }
 
-      const directSocket = io("/dirrect_chat");
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
 
-      function sendDirect() {
-        let msg = document.getElementById("directMsg").value;
+            const data = await response.json();
+            const profileResult = document.getElementById("profileResult");
+            const profileData = document.getElementById("profileData");
 
-        directSocket.emit("send_message", msg);
-      }
-
-      directSocket.on("receive_message", (msg) => {
-        let div = document.createElement("div");
-
-        div.className = "msg";
-
-        div.innerHTML = msg;
-
-        document.getElementById("directMessages").appendChild(div);
-      });
+            if (response.ok) {
+              profileData.textContent = JSON.stringify(data.user, null, 2);
+              profileResult.style.display = "block";
+              showMessage("Profile loaded successfully!");
+            } else {
+              showMessage(
+                data.error || "Failed to load profile. Token might be expired.",
+                true,
+              );
+              profileResult.style.display = "none";
+            }
+          } catch (err) {
+            showMessage("Network error. Is your server running?", true);
+          }
+        });
     </script>
   </body>
 </html>
