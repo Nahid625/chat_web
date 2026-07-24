@@ -40,8 +40,9 @@ model ConversationUser {
 
   // relation
   conversationId String
-  userId         String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+ 
+  userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId]) 
