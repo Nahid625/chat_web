@@ -17,10 +17,10 @@ model User {
   name          String?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
-
-  // রিলেশনস
+  // relation
   conversations ConversationUser[]
   messages      Message[]
+  authoraization String?
 }
 
 model Conversation {
@@ -28,25 +28,26 @@ model Conversation {
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
-  // রিলেশনস
+  // realation
   users     ConversationUser[]
   messages  Message[]
 }
 
 model ConversationUser {
   id             String       @id @default(uuid())
-  conversationId String
-  userId         String
+ 
   createdAt      DateTime     @default(now())
 
-  // রিলেশনস
+  // relation
+  conversationId String
+  userId         String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId]) // একই কনভার্স যেন ডুপ্লিকেট না হয়
 }
 
-// ৩. মেসেজ টেবিল (যেখানে প্রতিটি চ্যাটের হিস্ট্রি সেভ থাকবে)
+// ৩. message table chat history save 
 model Message {
   id             String       @id @default(uuid())
   conversationId String
@@ -54,7 +55,7 @@ model Message {
   message        String
   createdAt      DateTime     @default(now())
 
-  // রিলেশনস
+  // relation
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
