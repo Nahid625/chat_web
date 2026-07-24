@@ -44,7 +44,7 @@ model ConversationUser {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([conversationId, userId]) // একই কনভার্স যেন ডুপ্লিকেট না হয়
+  @@unique([conversationId, userId]) 
 }
 
 // ৩. message table chat history save 

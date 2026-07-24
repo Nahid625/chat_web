@@ -8,9 +8,7 @@ if (!jwtSecret) {
 const authorize = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res
-      .status(401)
-      .json({ error: "Authorization header missing or malformed" });
+    return res.status(401).json({ error: "Authorization header missing or malformed" });
   }
 
   const token = authHeader.split(" ")[1];
@@ -27,6 +25,7 @@ const authorize = (req, res, next) => {
   }
 };
 
+// Double check that 'authorize' is spelled identically here
 module.exports = {
   authorize,
 };

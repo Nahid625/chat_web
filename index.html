@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auth Tester</title>
+    <title>Auth & Chat Tester</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -51,6 +51,13 @@
       .btn-blue:hover {
         background: #1976d2;
       }
+      .btn-purple {
+        background: #9c27b0;
+        margin-top: 10px;
+      }
+      .btn-purple:hover {
+        background: #7b1fa2;
+      }
       #messageBox {
         padding: 10px;
         margin-bottom: 20px;
@@ -75,7 +82,7 @@
   </head>
   <body>
     <div class="container">
-      <h2 style="text-align: center">API Tester</h2>
+      <h2 style="text-align: center">API & Chat Tester</h2>
 
       <!-- Message Box for Alerts -->
       <div id="messageBox"></div>
@@ -122,11 +129,29 @@
           <pre id="profileData"></pre>
         </div>
       </div>
+
+      <!-- CREATE CONVERSATION TESTER -->
+      <div class="card">
+        <h3>Start Conversation</h3>
+        <p>Enter the recipient user's ID to begin a chat.</p>
+        <form id="conversationForm">
+          <input
+            type="text"
+            id="recipientId"
+            placeholder="Recipient User ID"
+            required
+          />
+          <button type="submit" class="btn-purple">Create Conversation</button>
+        </form>
+        <div id="conversationResult" style="margin-top: 15px; display: none">
+          <h4>Conversation Data:</h4>
+          <pre id="conversationData"></pre>
+        </div>
+      </div>
     </div>
 
     <script>
       // --- CONFIGURATION ---
-      // Change this if your Express routes have a prefix like '/api/users'
       const API_BASE_URL = "http://localhost:4000";
 
       // --- UI HELPER ---
@@ -185,7 +210,6 @@
             const data = await response.json();
 
             if (response.ok) {
-              // Save the JWT token to local storage so we can use it for protected routes
               localStorage.setItem("token", data.token);
               showMessage(
                 `Welcome back, ${data.user.name || "User"}! Token saved.`,
@@ -233,6 +257,56 @@
                 true,
               );
               profileResult.style.display = "none";
+            }
+          } catch (err) {
+            showMessage("Network error. Is your server running?", true);
+          }
+        });
+
+      // --- CREATE CONVERSATION LOGIC ---
+      document
+        .getElementById("conversationForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const token = localStorage.getItem("token");
+          const recipientId = document.getElementById("recipientId").value;
+
+          if (!token) {
+            showMessage("No token found. Please log in first!", true);
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              `${API_BASE_URL}/api/chat/create-converstation`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ recipientId }),
+              },
+            );
+
+            const data = await response.json();
+            const conversationResult =
+              document.getElementById("conversationResult");
+            const conversationData =
+              document.getElementById("conversationData");
+
+            if (response.ok) {
+              conversationData.textContent = JSON.stringify(
+                data.conversation,
+                null,
+                2,
+              );
+              conversationResult.style.display = "block";
+              showMessage("Conversation created successfully!");
+              document.getElementById("conversationForm").reset();
+            } else {
+              showMessage(data.error || "Failed to create conversation", true);
+              conversationResult.style.display = "none";
             }
           } catch (err) {
             showMessage("Network error. Is your server running?", true);

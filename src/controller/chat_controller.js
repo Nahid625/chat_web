@@ -1,0 +1,43 @@
+const { prisma } = require("../config/prisma_initialize");
+
+// create converstation
+
+const createConverstation = async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const { recipientId } = req.body;
+
+    if (!recipientId) {
+      return res.status(400).json({ error: "recipientId is required" });
+    }
+
+    if (currentUserId === recipientId) {
+      return res
+        .status(400)
+        .json({ error: "you cannot start a converstation with you" });
+    }
+
+    // create converstation
+
+    const newConverstation = await prisma.conversation.create({
+      data: {
+        users: { create: [{ userId: currentUserId }, { userId: recipientId }] },
+      },
+      include: {
+        users: {
+          include: { user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    });
+    return res.status(201).json({
+      message: "Conversation created successfully",
+      conversation: newConverstation,
+    });
+  } catch (error) {
+    console.log(`Enternel server error ${String(error)}`);
+  }
+};
+
+module.exports = {
+  createConverstation,
+};
