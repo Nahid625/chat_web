@@ -42,31 +42,50 @@ const getConverstation = async (req, res) => {
     const userId = req.user.id;
     console.log(`user Id is this ${String(userId)}`);
 
-    const findUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        conversations: {
-          include: {
-            conversation: {
-              include: {
-                users: { select: { id: true, name: true, email: true } },
+    const [findUser, userConversations] = await prisma.$transaction([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      }),
+      prisma.conversationUser.findMany({
+        where: { userId: userId },
+        include: {
+          conversation: {
+            include: {
+              users: {
+                include: {
+                  user: {
+                    select: { id: true, name: true, email: true },
+                  },
+                },
+              },
+              messages: {
+                take: 1,
+                orderBy: { createdAt: "desc" },
               },
             },
           },
         },
-      },
-    });
+      }),
+    ]);
+
     if (!findUser) {
-      return res.status(400).send("user not found");
+      return res.status(404).json({ error: "User not found or unauthorized" });
     }
+
     return res.status(200).json({
-      user: { findUser },
+      success: true,
+      count: userConversations.length,
+      conversations: userConversations.map((item) => item.conversation),
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send(`Enternel server error : ${String(error)}`);
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: `Internal server error: ${String(error)}` });
   }
 };
 module.exports = {
   createConverstation,
+  getConverstation
 };

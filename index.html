@@ -58,6 +58,13 @@
       .btn-purple:hover {
         background: #7b1fa2;
       }
+      .btn-orange {
+        background: #ff9800;
+        margin-top: 10px;
+      }
+      .btn-orange:hover {
+        background: #f57c00;
+      }
       #messageBox {
         padding: 10px;
         margin-bottom: 20px;
@@ -135,17 +142,23 @@
         <h3>Start Conversation</h3>
         <p>Enter the recipient user's ID to begin a chat.</p>
         <form id="conversationForm">
-          <input
-            type="text"
-            id="recipientId"
-            placeholder="Recipient User ID"
-            required
-          />
+          <input type="text" id="recipientId" placeholder="Recipient User ID" required />
           <button type="submit" class="btn-purple">Create Conversation</button>
         </form>
         <div id="conversationResult" style="margin-top: 15px; display: none">
           <h4>Conversation Data:</h4>
           <pre id="conversationData"></pre>
+        </div>
+      </div>
+
+      <!-- GET CONVERSATIONS TESTER -->
+      <div class="card">
+        <h3>Get My Conversations</h3>
+        <p>Fetch all chat threads you belong to.</p>
+        <button id="getConversationsBtn" class="btn-orange">Load Conversations</button>
+        <div id="conversationsResult" style="margin-top: 15px; display: none">
+          <h4>Conversations List:</h4>
+          <pre id="conversationsData"></pre>
         </div>
       </div>
     </div>
@@ -277,36 +290,65 @@
           }
 
           try {
-            const response = await fetch(
-              `${API_BASE_URL}/api/chat/create-converstation`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ recipientId }),
+            const response = await fetch(`${API_BASE_URL}/api/chat/create-converstation`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
               },
-            );
+              body: JSON.stringify({ recipientId }),
+            });
 
             const data = await response.json();
-            const conversationResult =
-              document.getElementById("conversationResult");
-            const conversationData =
-              document.getElementById("conversationData");
+            const conversationResult = document.getElementById("conversationResult");
+            const conversationData = document.getElementById("conversationData");
 
             if (response.ok) {
-              conversationData.textContent = JSON.stringify(
-                data.conversation,
-                null,
-                2,
-              );
+              conversationData.textContent = JSON.stringify(data.conversation, null, 2);
               conversationResult.style.display = "block";
               showMessage("Conversation created successfully!");
               document.getElementById("conversationForm").reset();
             } else {
               showMessage(data.error || "Failed to create conversation", true);
               conversationResult.style.display = "none";
+            }
+          } catch (err) {
+            showMessage("Network error. Is your server running?", true);
+          }
+        });
+
+      // --- GET CONVERSATIONS LOGIC ---
+      document
+        .getElementById("getConversationsBtn")
+        .addEventListener("click", async () => {
+          const token = localStorage.getItem("token");
+
+          if (!token) {
+            showMessage("No token found. Please log in first!", true);
+            return;
+          }
+
+          try {
+            // Make sure your backend route matches this endpoint (e.g., router.get("/conversations", authorize, getConverstation))
+            const response = await fetch(`${API_BASE_URL}/api/chat/conversations`, {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            const data = await response.json();
+            const conversationsResult = document.getElementById("conversationsResult");
+            const conversationsData = document.getElementById("conversationsData");
+
+            if (response.ok) {
+              conversationsData.textContent = JSON.stringify(data.conversations, null, 2);
+              conversationsResult.style.display = "block";
+              showMessage(`Loaded ${data.count} conversation(s) successfully!`);
+            } else {
+              showMessage(data.error || "Failed to load conversations", true);
+              conversationsResult.style.display = "none";
             }
           } catch (err) {
             showMessage("Network error. Is your server running?", true);
