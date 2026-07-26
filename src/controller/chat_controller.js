@@ -122,9 +122,51 @@ const sendMessage = async (req, res) => {
       .json({ error: `Internal Server Error: ${String(error)}` });
   }
 };
+const getSPCmessageList = async (req, res) => {
+  try {
+    const usrID = req.user.id;
 
+    // FIX 1: Destructure conversationId from params
+    // Make sure your route definition looks like this: router.get("/messages/:conversationId", authorize, getSPCmessageList)
+    const { conversationId } = req.params;
+
+    const [findUser, getAllMessage] = await prisma.$transaction([
+      prisma.user.findUnique({
+        where: { id: usrID },
+      }),
+      prisma.message.findMany({
+        where: { conversationId: conversationId },
+        // BONUS: Sort messages from oldest to newest so the chat flows correctly
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    if (!findUser) {
+      return res.status(400).json({ error: "User not Found" });
+    }
+
+    // FIX 2 & FIX 3: Check array length, and use 404 for the status code number
+    if (getAllMessage.length === 0) {
+      return res.status(404).json({
+        message: "There are no messages in this specific conversation",
+      });
+    }
+
+    return res.status(200).json({
+      status: "okk",
+      data: getAllMessage, // I cleaned up the response structure slightly
+    });
+  } catch (error) {
+    console.error(error);
+    // Fixed the error string formatting
+    return res
+      .status(500)
+      .json({ error: `Internal server Error: ${String(error)}` });
+  }
+};
 module.exports = {
   createConverstation,
   getConverstation,
   sendMessage,
+  getSPCmessageList,
 };

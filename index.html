@@ -3,366 +3,816 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Complete Chat App - Production Flow</title>
+    <title>Deep Ocean Glassmorphism Chat</title>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Socket.io Client -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-        background: #f4f4f9;
-        color: #333;
+      :root {
+        --bg-deep: #031321;
+        --ocean-glow: #0ea5e9;
+        --cyan-accent: #67e8f9;
+        --glass-bg: rgba(9, 25, 40, 0.45);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
       }
-      .container {
-        max-width: 650px;
-        margin: 0 auto;
-      }
-      .card {
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-      }
-      input,
-      button,
-      select {
-        width: 100%;
-        padding: 10px;
-        margin: 8px 0;
+
+      * {
         box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        margin: 0;
+        padding: 0;
       }
-      button {
-        background: #007bff;
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: radial-gradient(circle at top, #0b3d5f, #051825, #01070f);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+        position: relative;
       }
-      button:hover {
-        background: #0056b3;
+
+      /* Mouse Glow Follower */
+      #mouse-glow {
+        position: fixed;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(
+          circle,
+          rgba(103, 232, 249, 0.12) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.3s,
+          height 0.3s;
+        z-index: 1;
       }
+
+      /* Ambient Background Orbs */
+      .ambient-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(250px);
+        pointer-events: none;
+        z-index: 0;
+      }
+      .orb-1 {
+        width: 400px;
+        height: 400px;
+        background: rgba(103, 232, 249, 0.15);
+        top: -100px;
+        left: -100px;
+      }
+      .orb-2 {
+        width: 500px;
+        height: 500px;
+        background: rgba(14, 165, 233, 0.12);
+        bottom: -150px;
+        right: -150px;
+      }
+
+      /* Floating Bubbles Layer */
+      .bubbles-container {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 1;
+        overflow: hidden;
+      }
+      .bubble {
+        position: absolute;
+        bottom: -100px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 50%;
+        animation: riseBubble linear infinite;
+      }
+      @keyframes riseBubble {
+        0% {
+          transform: translateY(0) scale(1);
+          opacity: 0;
+        }
+        30% {
+          opacity: 0.6;
+        }
+        70% {
+          opacity: 0.6;
+        }
+        100% {
+          transform: translateY(-120vh) scale(1.4);
+          opacity: 0;
+        }
+      }
+
+      /* Main Container & Card Ambient Float */
+      .app-container {
+        width: 100%;
+        max-width: 620px;
+        padding: 20px;
+        z-index: 2;
+        animation: cardFloat 8s ease-in-out infinite;
+      }
+      @keyframes cardFloat {
+        0%,
+        100% {
+          transform: translateY(-4px);
+        }
+        50% {
+          transform: translateY(4px);
+        }
+      }
+
+      /* Glass Cards */
+      .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(35px);
+        -webkit-backdrop-filter: blur(35px);
+        border: 1px solid var(--glass-border);
+        border-radius: 30px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+        padding: 35px;
+        transform: translateZ(30px) rotateX(1deg);
+        transition:
+          transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+          box-shadow 0.4s ease;
+      }
+      .glass-card:hover {
+        transform: translateY(-6px) scale(1.01) translateZ(35px);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+      }
+
       .hidden {
         display: none !important;
       }
-      ul {
-        padding-left: 20px;
-        max-height: 200px;
+
+      /* Typography */
+      h2,
+      h4,
+      h5,
+      h6 {
+        color: var(--text-main);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .text-muted {
+        color: var(--text-muted) !important;
+      }
+
+      /* Floating Glass Inputs */
+      .glass-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 14px 18px;
+        color: var(--text-main);
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+      .glass-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+      }
+      .glass-input:focus {
+        border-color: var(--cyan-accent);
+        box-shadow: 0 0 25px rgba(50, 180, 255, 0.35);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      /* Ocean Buttons */
+      .ocean-btn {
+        background: linear-gradient(135deg, #06b6d4, #2563eb);
+        border: none;
+        color: #ffffff;
+        font-weight: 600;
+        border-radius: 16px;
+        padding: 14px 24px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 10px 25px rgba(6, 182, 212, 0.25);
+        position: relative;
+        overflow: hidden;
+      }
+      .ocean-btn::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: 0.5s;
+      }
+      .ocean-btn:hover::after {
+        left: 100%;
+      }
+      .ocean-btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(6, 182, 212, 0.4);
+      }
+      .ocean-btn:active {
+        transform: scale(0.97);
+      }
+
+      .btn-outline-ocean {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--cyan-accent);
+        border-radius: 12px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .ocean-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      /* Conversation List items */
+      .conv-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .conv-item:hover {
+        transform: translateX(6px);
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(103, 232, 249, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+      .conv-item.active {
+        background: rgba(14, 165, 233, 0.12);
+        border-color: var(--cyan-accent);
+      }
+      .conv-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: var(--cyan-accent);
+        box-shadow: 0 0 10px var(--cyan-accent);
+      }
+
+      /* Chat Area & Custom Ocean Scrollbar */
+      #liveMessages {
+        height: 420px;
         overflow-y: auto;
-        border: 1px solid #ddd;
-        padding: 10px;
-        background: #fafafa;
-        border-radius: 4px;
-        list-style-type: none;
+        background: rgba(3, 19, 33, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 20px;
+        padding: 20px;
+        scroll-behavior: smooth;
       }
-      li {
-        padding: 6px 0;
-        border-bottom: 1px solid #eee;
+      #liveMessages::-webkit-scrollbar {
+        width: 4px;
       }
-      .logout-btn {
-        background: #dc3545;
+      #liveMessages::-webkit-scrollbar-track {
+        background: transparent;
       }
-      .logout-btn:hover {
-        background: #c82333;
+      #liveMessages::-webkit-scrollbar-thumb {
+        background: var(--ocean-glow);
+        border-radius: 10px;
+      }
+
+      /* Message Bubbles & Pop Animation */
+      .message-row {
+        display: flex;
+        width: 100%;
+        margin-bottom: 14px;
+      }
+      .message-row.sent {
+        justify-content: flex-end;
+      }
+      .message-row.received {
+        justify-content: flex-start;
+      }
+
+      .message-bubble {
+        max-width: 72%;
+        padding: 12px 18px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        word-break: break-word;
+        position: relative;
+        animation: bubblePop 350ms cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      @keyframes bubblePop {
+        0% {
+          transform: scale(0.4) translateY(25px);
+          opacity: 0;
+        }
+        40% {
+          transform: scale(1.08) translateY(-4px);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1) translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Wet Glass Highlight Pseudo-element */
+      .message-bubble::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        left: 8px;
+        right: 8px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        filter: blur(4px);
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .sent .message-bubble {
+        background: linear-gradient(135deg, #06b6d4, #2563eb);
+        color: #ffffff;
+        border-radius: 26px 26px 6px 26px;
+      }
+
+      .received .message-bubble {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+        border-radius: 26px 26px 26px 6px;
+      }
+
+      /* Skeleton Shimmer Loading */
+      .skeleton-bubble {
+        height: 40px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 18px;
+        margin-bottom: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .skeleton-bubble::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 150%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.06),
+          transparent
+        );
+        animation: shimmer 1.5s infinite;
+      }
+      @keyframes shimmer {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      .flex-between {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .mb-4 {
+        margin-bottom: 1.5rem;
+      }
+      .mt-3 {
+        margin-top: 1rem;
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h2>🚀 Production Ready Chat System</h2>
+    <!-- Mouse Glow -->
+    <div id="mouse-glow"></div>
 
-      <!-- STEP 1: AUTH SECTION (Signup / Login) -->
-      <div id="authSection" class="card">
-        <h3 id="formTitle">Login</h3>
-        <input type="text" id="emailInput" placeholder="Enter Email" />
-        <input
-          type="password"
-          id="passwordInput"
-          placeholder="Enter Password"
-        />
-        <button id="authBtn" onclick="handleAuth()">Login</button>
-        <p style="text-align: center; margin-top: 10px; font-size: 14px">
-          <span id="toggleText">Don't have an account?</span>
-          <a
-            href="#"
-            onclick="toggleMode()"
-            id="toggleLink"
-            style="color: #007bff; text-decoration: none"
-            >Sign Up</a
-          >
-        </p>
-      </div>
+    <!-- Ambient Background Orbs -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
 
-      <!-- STEP 2: DASHBOARD SECTION (Profile, Create Conversation, Conversations List) -->
-      <div id="dashboardSection" class="card hidden">
-        <h3>User Dashboard</h3>
-        <div
-          id="userInfo"
-          style="
-            margin-bottom: 15px;
-            background: #e9ecef;
-            padding: 10px;
-            border-radius: 4px;
+    <!-- Floating Bubbles Layer -->
+    <div class="bubbles-container" id="bubblesContainer"></div>
+
+    <div class="app-container">
+      <h2
+        style="
+          text-align: center;
+          margin-bottom: 25px;
+          font-weight: 700;
+          text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        "
+      >
+        🌊 Deep Ocean Messenger
+      </h2>
+
+      <!-- LOGIN SECTION -->
+      <div id="loginSection" class="glass-card">
+        <h4 class="mb-4">Welcome Back</h4>
+        <form
+          onsubmit="
+            event.preventDefault();
+            login();
           "
         >
-          Loading profile...
-        </div>
-
-        <button class="logout-btn" onclick="logout()">Logout</button>
-
-        <hr style="margin: 20px 0" />
-
-        <!-- Create Conversation Box -->
-        <h4>Create New Conversation</h4>
-        <input
-          type="text"
-          id="recipientIdInput"
-          placeholder="Enter Recipient User ID"
-        />
-        <button onclick="createConversation()">Create Conversation</button>
-
-        <hr style="margin: 20px 0" />
-
-        <!-- My Conversations List -->
-        <h4>My Conversations</h4>
-        <button onclick="fetchConversations()">Refresh Conversations</button>
-        <ul id="conversationsList">
-          <li>Click refresh to load conversations...</li>
-        </ul>
+          <div style="margin-bottom: 20px">
+            <label
+              class="text-muted"
+              style="
+                font-size: 0.85rem;
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+              "
+              >Email Address</label
+            >
+            <input
+              type="email"
+              id="emailInput"
+              class="glass-input"
+              placeholder="name@example.com"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div style="margin-bottom: 25px">
+            <label
+              class="text-muted"
+              style="
+                font-size: 0.85rem;
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+              "
+              >Password</label
+            >
+            <input
+              type="password"
+              id="passwordInput"
+              class="glass-input"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <button type="submit" class="ocean-btn" style="width: 100%">
+            Sign In
+          </button>
+        </form>
       </div>
 
-      <!-- STEP 3: CHAT ROOM SECTION -->
-      <div id="chatSection" class="card hidden">
-        <button
-          onclick="backToDashboard()"
-          style="background: #6c757d; width: auto; padding: 6px 12px"
-        >
-          ← Back to Dashboard
-        </button>
-        <h3 id="activeChatTitle">Chat Room</h3>
+      <!-- DASHBOARD SECTION -->
+      <div id="dashboardSection" class="glass-card hidden">
+        <div class="flex-between mb-4">
+          <h5>Conversations</h5>
+          <button class="btn-outline-ocean" onclick="logout()">Logout</button>
+        </div>
 
-        <div style="margin-top: 15px">
+        <label
+          class="text-muted"
+          style="
+            font-size: 0.82rem;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+          "
+          >Start New Conversation</label
+        >
+        <div style="display: flex; gap: 10px; margin-bottom: 25px">
+          <input
+            type="text"
+            id="recipientId"
+            class="glass-input"
+            placeholder="Enter Recipient User ID"
+            autocomplete="off"
+          />
+          <button
+            class="ocean-btn"
+            style="padding: 12px 20px"
+            onclick="createConversation()"
+          >
+            Create
+          </button>
+        </div>
+
+        <div class="flex-between" style="margin-bottom: 12px">
+          <h6
+            class="text-muted"
+            style="
+              font-size: 0.85rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            "
+          >
+            Active Chats
+          </h6>
+          <button
+            class="btn-outline-ocean"
+            style="padding: 4px 10px; font-size: 0.75rem"
+            onclick="loadConversations()"
+          >
+            Refresh
+          </button>
+        </div>
+        <div id="conversationList" style="max-height: 240px; overflow-y: auto">
+          <!-- Conversations populate here -->
+        </div>
+      </div>
+
+      <!-- CHAT ROOM SECTION -->
+      <div id="chatSection" class="glass-card hidden">
+        <div class="flex-between mb-4">
+          <button class="btn-outline-ocean" onclick="backToDashboard()">
+            &larr; Back
+          </button>
+          <span
+            id="chatTitle"
+            style="
+              background: rgba(14, 165, 233, 0.15);
+              color: var(--cyan-accent);
+              padding: 6px 14px;
+              border-radius: 20px;
+              font-size: 0.85rem;
+              border: 1px solid rgba(103, 232, 249, 0.2);
+            "
+            >Room</span
+          >
+        </div>
+
+        <div id="liveMessages" class="mb-4">
+          <!-- Messages populate here -->
+        </div>
+
+        <div style="display: flex; gap: 10px">
           <input
             type="text"
             id="messageInput"
+            class="glass-input"
             placeholder="Type a message..."
+            autocomplete="off"
+            onkeydown="if (event.key === 'Enter') sendMessage();"
           />
-          <button onclick="sendMessage()">Send Message</button>
+          <button
+            class="ocean-btn"
+            style="padding: 12px 24px"
+            onclick="sendMessage()"
+          >
+            Send
+          </button>
         </div>
-
-        <h4>Live Messages:</h4>
-        <ul id="messagesList"></ul>
       </div>
     </div>
 
-    <!-- Socket.io CDN -->
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
-      const BASE_URL = "http://localhost:4000";
-      let isSignupMode = false;
+      const API_URL = "http://localhost:4000/api";
+      const socket = io("http://localhost:4000");
       let currentConversationId = null;
+      let currentUserId = null;
 
-      window.onload = () => {
-        const token = localStorage.getItem("token");
-        if (token) {
-          fetchProfile(token);
-        }
-      };
-
-      function toggleMode() {
-        isSignupMode = !isSignupMode;
-        document.getElementById("formTitle").innerText = isSignupMode
-          ? "Sign Up"
-          : "Login";
-        document.getElementById("authBtn").innerText = isSignupMode
-          ? "Register & Signup"
-          : "Login";
-        document.getElementById("toggleText").innerText = isSignupMode
-          ? "Already have an account?"
-          : "Don't have an account?";
-        document.getElementById("toggleLink").innerText = isSignupMode
-          ? "Login"
-          : "Sign Up";
+      // Generate Floating Background Bubbles dynamically
+      const bubblesContainer = document.getElementById("bubblesContainer");
+      for (let i = 0; i < 18; i++) {
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        const size = Math.random() * 16 + 6 + "px";
+        bubble.style.width = size;
+        bubble.style.height = size;
+        bubble.style.left = Math.random() * 100 + "%";
+        bubble.style.animationDuration = Math.random() * 8 + 6 + "s";
+        bubble.style.animationDelay = Math.random() * 5 + "s";
+        bubblesContainer.appendChild(bubble);
       }
 
-      async function handleAuth() {
+      // Mouse Glow Follower Tracker
+      const mouseGlow = document.getElementById("mouse-glow");
+      window.addEventListener("mousemove", (e) => {
+        mouseGlow.style.left = e.clientX + "px";
+        mouseGlow.style.top = e.clientY + "px";
+      });
+
+      function getUserIdFromToken(token) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("0" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join(""),
+          );
+          return JSON.parse(jsonPayload).id || JSON.parse(jsonPayload).userId;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      socket.on("connect", () => {
+        console.log("Connected to Deep Ocean Socket Server:", socket.id);
+      });
+
+      socket.on("receive_message", (data) => {
+        appendMessage(data.message, data.senderId);
+      });
+
+      async function login() {
         const email = document.getElementById("emailInput").value;
         const password = document.getElementById("passwordInput").value;
 
-        if (!email || !password) {
-          alert("Please enter email and password!");
-          return;
-        }
-
-        const endpoint = isSignupMode
-          ? "/api/users/signup"
-          : "/api/users/login";
-
         try {
-          const response = await fetch(`${BASE_URL}${endpoint}`, {
+          const res = await fetch(`${API_URL}/users/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
           });
+          const data = await res.json();
 
-          const data = await response.json();
+          if (data.token) {
+            localStorage.setItem("token", data.token);
+            currentUserId = getUserIdFromToken(data.token);
 
-          if (response.ok) {
-            const token = data.token || data.accessToken;
-            if (token) {
-              localStorage.setItem("token", token);
-              fetchProfile(token);
-            } else {
-              alert("Token missing in response!");
-            }
-          } else {
-            alert("Failed: " + (data.error || "Invalid credentials"));
-          }
-        } catch (err) {
-          console.error("Auth error:", err);
-          alert("Server error during auth!");
-        }
-      }
-
-      async function fetchProfile(token) {
-        try {
-          const response = await fetch(`${BASE_URL}/api/users/profile`, {
-            method: "GET",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
-          const data = await response.json();
-          if (response.ok) {
-            document.getElementById("authSection").classList.add("hidden");
+            document.getElementById("loginSection").classList.add("hidden");
             document
               .getElementById("dashboardSection")
               .classList.remove("hidden");
-
-            document.getElementById("userInfo").innerHTML = `
-            <b>ID:</b> ${data.user.id} <br>
-            <b>Name:</b> ${data.user.name || "N/A"} <br>
-            <b>Email:</b> ${data.user.email}
-          `;
-            fetchConversations();
+            loadConversations();
           } else {
-            logout();
+            alert("Login failed!");
           }
         } catch (err) {
-          console.error("Profile error:", err);
+          console.error("Login Error:", err);
         }
+      }
+
+      function logout() {
+        localStorage.removeItem("token");
+        currentUserId = null;
+        document.getElementById("dashboardSection").classList.add("hidden");
+        document.getElementById("chatSection").classList.add("hidden");
+        document.getElementById("loginSection").classList.remove("hidden");
+        document.getElementById("emailInput").value = "";
+        document.getElementById("passwordInput").value = "";
       }
 
       async function createConversation() {
-        const recipientId = document.getElementById("recipientIdInput").value;
+        const recipientId = document.getElementById("recipientId").value;
         const token = localStorage.getItem("token");
 
-        if (!recipientId) {
-          alert("Please enter recipient ID!");
-          return;
-        }
+        if (!recipientId) return alert("Please enter a recipient ID");
 
         try {
-          const response = await fetch(
-            `${BASE_URL}/api/chat/create-converstation`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ recipientId }),
+          const res = await fetch(`${API_URL}/chat/create-conversation`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-          );
+            body: JSON.stringify({ recipientId }),
+          });
 
-          const data = await response.json();
-          if (response.ok) {
-            alert("Conversation created successfully!");
-            document.getElementById("recipientIdInput").value = "";
-            fetchConversations();
-          } else {
-            alert("Error: " + (data.error || "Failed to create"));
+          if (res.ok) {
+            document.getElementById("recipientId").value = "";
+            loadConversations();
           }
         } catch (err) {
-          console.error("Create conversation error:", err);
+          console.error("Create Conversation Error:", err);
         }
       }
-      async function fetchConversations() {
+
+      async function loadConversations() {
+        const token = localStorage.getItem("token");
+        if (!currentUserId && token) currentUserId = getUserIdFromToken(token);
+
+        const listDiv = document.getElementById("conversationList");
+        listDiv.innerHTML = `
+            <div class="skeleton-bubble" style="width: 100%;"></div>
+            <div class="skeleton-bubble" style="width: 80%;"></div>
+        `;
+
+        try {
+          const res = await fetch(`${API_URL}/chat/get-conversations`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+
+          listDiv.innerHTML = "";
+          if (data.conversations && data.conversations.length > 0) {
+            data.conversations.forEach((conv) => {
+              const item = document.createElement("div");
+              item.className = `conv-item ${conv.id === currentConversationId ? "active" : ""}`;
+              item.innerHTML = `<span style="font-size: 0.88rem; color: var(--text-main); font-weight: 500;">Chat: ${conv.id.substring(0, 14)}...</span> <span style="font-size: 0.75rem; color: var(--cyan-accent);">Open &rarr;</span>`;
+              item.onclick = () => openChatRoom(conv.id);
+              listDiv.appendChild(item);
+            });
+          } else {
+            listDiv.innerHTML =
+              "<p class='text-muted' style='text-align: center; font-size: 0.85rem; padding: 20px;'>No active conversations.</p>";
+          }
+        } catch (err) {
+          console.error("Load Conversations Error:", err);
+          listDiv.innerHTML =
+            "<p style='color: #ef4444; text-align: center; font-size: 0.85rem;'>Failed to load conversations.</p>";
+        }
+      }
+
+      async function openChatRoom(conversationId) {
+        currentConversationId = conversationId;
+
+        document.getElementById("dashboardSection").classList.add("hidden");
+        document.getElementById("chatSection").classList.remove("hidden");
+        document.getElementById("chatTitle").innerText =
+          `Room: ${conversationId.substring(0, 10)}...`;
+
+        const messageContainer = document.getElementById("liveMessages");
+        messageContainer.innerHTML = `
+            <div class="skeleton-bubble" style="width: 60%;"></div>
+            <div class="skeleton-bubble" style="width: 45%; margin-left: auto;"></div>
+            <div class="skeleton-bubble" style="width: 75%;"></div>
+        `;
+
+        socket.emit("join_room", conversationId);
+
         const token = localStorage.getItem("token");
         try {
-          const response = await fetch(
-            `${BASE_URL}/api/chat/get-conversations`,
+          const res = await fetch(
+            `${API_URL}/chat/messages/${conversationId}`,
             {
               method: "GET",
               headers: { Authorization: `Bearer ${token}` },
             },
           );
 
-          const data = await response.json();
-          const ul = document.getElementById("conversationsList");
-          ul.innerHTML = "";
+          const data = await res.json();
+          messageContainer.innerHTML = "";
 
-          if (response.ok && data.conversations) {
-            if (data.conversations.length === 0) {
-              ul.innerHTML =
-                "<li>No conversations found. Create one above!</li>";
-              return;
-            }
-
-            data.conversations.forEach((conv) => {
-              const li = document.createElement("li");
-              li.style.cursor = "pointer";
-              li.style.padding = "8px";
-              li.style.margin = "4px 0";
-              li.style.background = "#fff";
-              li.style.border = "1px solid #ccc";
-              li.style.borderRadius = "4px";
-
-              li.innerHTML = `<b>Conversation ID:</b> ${conv.id}`;
-              li.onclick = () => openChatRoom(conv.id);
-              ul.appendChild(li);
+          if (res.ok && data.data && data.data.length > 0) {
+            data.data.forEach((msg) => {
+              appendMessage(msg.message, msg.senderId);
             });
+            scrollToBottom();
           } else {
-            ul.innerHTML = "<li>Failed to load conversations</li>";
+            messageContainer.innerHTML =
+              "<p id='noMsgText' class='text-muted' style='text-align: center; font-size: 0.85rem; margin-top: 150px;'>No messages yet. Dive in and say hello!</p>";
           }
         } catch (err) {
-          console.error("Fetch conversations error:", err);
+          console.error("Fetch History Error:", err);
+          messageContainer.innerHTML =
+            "<p style='color: #ef4444; text-align: center; font-size: 0.85rem;'>Failed to load message history.</p>";
         }
-      }
-
-      const socket = io(BASE_URL);
-
-      socket.on("connect", () => {
-        console.log("Socket connected:", socket.id);
-      });
-
-      function openChatRoom(conversationId) {
-        currentConversationId = conversationId;
-        document.getElementById("dashboardSection").classList.add("hidden");
-        document.getElementById("chatSection").classList.remove("hidden");
-        document.getElementById("activeChatTitle").innerText =
-          `Chat Room: ${conversationId}`;
-        document.getElementById("messagesList").innerHTML = "";
-
-        socket.emit("join_room", conversationId);
       }
 
       function backToDashboard() {
+        currentConversationId = null;
         document.getElementById("chatSection").classList.add("hidden");
         document.getElementById("dashboardSection").classList.remove("hidden");
-        currentConversationId = null;
+        document.getElementById("liveMessages").innerHTML = "";
+        loadConversations();
       }
 
       async function sendMessage() {
-        const text = document.getElementById("messageInput").value;
+        const input = document.getElementById("messageInput");
+        const text = input.value.trim();
         const token = localStorage.getItem("token");
 
-        if (!text || !currentConversationId) {
-          alert("Type a message first!");
-          return;
-        }
+        if (!text || !currentConversationId) return;
+
+        input.value = "";
 
         try {
-          const response = await fetch(`${BASE_URL}/api/chat/send-message`, {
+          await fetch(`${API_URL}/chat/send-message`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -373,30 +823,34 @@
               text: text,
             }),
           });
-
-          const result = await response.json();
-          if (response.ok) {
-            document.getElementById("messageInput").value = "";
-          } else {
-            alert("Error: " + (result.error || "Failed to send"));
-          }
         } catch (err) {
-          console.error("Send error:", err);
+          console.error("Send Message Error:", err);
         }
       }
 
-      socket.on("receive_message", (data) => {
-        const ul = document.getElementById("messagesList");
-        const li = document.createElement("li");
-        li.textContent = `Message: ${data.message}`;
-        ul.appendChild(li);
-      });
+      function appendMessage(text, senderId) {
+        const messageContainer = document.getElementById("liveMessages");
 
-      function logout() {
-        localStorage.removeItem("token");
-        document.getElementById("dashboardSection").classList.add("hidden");
-        document.getElementById("chatSection").classList.add("hidden");
-        document.getElementById("authSection").classList.remove("hidden");
+        const noMsgText = document.getElementById("noMsgText");
+        if (noMsgText) noMsgText.remove();
+
+        const isMe = senderId === currentUserId;
+
+        const rowDiv = document.createElement("div");
+        rowDiv.className = `message-row ${isMe ? "sent" : "received"}`;
+
+        const bubbleDiv = document.createElement("div");
+        bubbleDiv.className = "message-bubble";
+        bubbleDiv.innerText = text;
+
+        rowDiv.appendChild(bubbleDiv);
+        messageContainer.appendChild(rowDiv);
+        scrollToBottom();
+      }
+
+      function scrollToBottom() {
+        const messageContainer = document.getElementById("liveMessages");
+        messageContainer.scrollTop = messageContainer.scrollHeight;
       }
     </script>
   </body>
