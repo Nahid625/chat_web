@@ -243,7 +243,7 @@
         cursor: pointer;
         transition: all 0.2s ease;
       }
-      .ocean-btn:hover {
+      .btn-outline-ocean:hover {
         background: rgba(255, 255, 255, 0.08);
       }
 
@@ -343,7 +343,6 @@
         }
       }
 
-      /* Wet Glass Highlight Pseudo-element */
       .message-bubble::before {
         content: "";
         position: absolute;
@@ -440,15 +439,39 @@
         🌊 Deep Ocean Messenger
       </h2>
 
-      <!-- LOGIN SECTION -->
+      <!-- LOGIN / REGISTER SECTION -->
       <div id="loginSection" class="glass-card">
-        <h4 class="mb-4">Welcome Back</h4>
+        <h4 id="authFormTitle" class="mb-4">Welcome Back</h4>
         <form
           onsubmit="
             event.preventDefault();
-            login();
+            handleAuth();
           "
         >
+          <!-- Name Field (Only shown during Sign Up) -->
+          <div
+            id="nameFieldContainer"
+            style="margin-bottom: 20px; display: none"
+          >
+            <label
+              class="text-muted"
+              style="
+                font-size: 0.85rem;
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+              "
+              >Your Name</label
+            >
+            <input
+              type="text"
+              id="nameInput"
+              class="glass-input"
+              placeholder="Nahid"
+              autocomplete="off"
+            />
+          </div>
+
           <div style="margin-bottom: 20px">
             <label
               class="text-muted"
@@ -489,9 +512,32 @@
               required
             />
           </div>
-          <button type="submit" class="ocean-btn" style="width: 100%">
+
+          <button
+            type="submit"
+            id="authSubmitBtn"
+            class="ocean-btn"
+            style="width: 100%; margin-bottom: 15px"
+          >
             Sign In
           </button>
+
+          <div style="text-align: center">
+            <a
+              href="#"
+              id="authToggleLink"
+              onclick="
+                toggleAuthMode();
+                return false;
+              "
+              style="
+                color: var(--cyan-accent);
+                font-size: 0.85rem;
+                text-decoration: none;
+              "
+              >Don't have an account? Sign Up</a
+            >
+          </div>
         </form>
       </div>
 
@@ -598,10 +644,37 @@
     </div>
 
     <script>
+      // Backend configuration URLs
       const API_URL = "http://localhost:4000/api";
-      const socket = io("http://localhost:4000");
+      const SOCKET_URL = "https://localhost:4000";
+
+      const socket = io(SOCKET_URL);
       let currentConversationId = null;
       let currentUserId = null;
+      let isRegisterMode = false;
+
+      // Toggle between Sign In and Sign Up views
+      function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        const title = document.getElementById("authFormTitle");
+        const btn = document.getElementById("authSubmitBtn");
+        const link = document.getElementById("authToggleLink");
+        const nameField = document.getElementById("nameFieldContainer");
+
+        if (isRegisterMode) {
+          title.innerText = "Create Account";
+          btn.innerText = "Sign Up";
+          link.innerText = "Already have an account? Sign In";
+          nameField.style.display = "block";
+          document.getElementById("nameInput").required = true;
+        } else {
+          title.innerText = "Welcome Back";
+          btn.innerText = "Sign In";
+          link.innerText = "Don't have an account? Sign Up";
+          nameField.style.display = "none";
+          document.getElementById("nameInput").required = false;
+        }
+      }
 
       // Generate Floating Background Bubbles dynamically
       const bubblesContainer = document.getElementById("bubblesContainer");
@@ -648,21 +721,38 @@
         appendMessage(data.message, data.senderId);
       });
 
-      async function login() {
+      async function handleAuth() {
         const email = document.getElementById("emailInput").value;
         const password = document.getElementById("passwordInput").value;
 
+        // FIXED: Added /users to the login path
+        let endpoint = `${API_URL}/users/login`;
+        let payload = { email, password };
+
+        if (isRegisterMode) {
+          // FIXED: Pointing to /users/signup based on your backend route
+          endpoint = `${API_URL}/users/signup`;
+          payload.name = document.getElementById("nameInput").value;
+        }
+
         try {
-          const res = await fetch(`${API_URL}/users/login`, {
+          const res = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify(payload),
           });
           const data = await res.json();
 
-          if (data.token) {
-            localStorage.setItem("token", data.token);
-            currentUserId = getUserIdFromToken(data.token);
+          if (res.ok && (data.token || data.status === "okk")) {
+            if (isRegisterMode) {
+              alert("Account created successfully! Please sign in.");
+              toggleAuthMode();
+              return;
+            }
+
+            const token = data.token;
+            localStorage.setItem("token", token);
+            currentUserId = getUserIdFromToken(token);
 
             document.getElementById("loginSection").classList.add("hidden");
             document
@@ -670,10 +760,11 @@
               .classList.remove("hidden");
             loadConversations();
           } else {
-            alert("Login failed!");
+            alert(data.error || data.message || "Authentication failed!");
           }
         } catch (err) {
-          console.error("Login Error:", err);
+          console.error("Auth Error:", err);
+          alert("Server error during authentication.");
         }
       }
 
@@ -685,6 +776,8 @@
         document.getElementById("loginSection").classList.remove("hidden");
         document.getElementById("emailInput").value = "";
         document.getElementById("passwordInput").value = "";
+        if (document.getElementById("nameInput"))
+          document.getElementById("nameInput").value = "";
       }
 
       async function createConversation() {
@@ -694,7 +787,8 @@
         if (!recipientId) return alert("Please enter a recipient ID");
 
         try {
-          const res = await fetch(`${API_URL}/chat/create-conversation`, {
+          // FIXED: Adjusted to perfectly match your backend typo "create-converstation"
+          const res = await fetch(`${API_URL}/chat/create-converstation`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

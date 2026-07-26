@@ -99,7 +99,7 @@ const sendMessage = async (req, res) => {
           connect: { id: senderId },
         },
         conversation: {
-          connect: { id: conversationId }, // এখানে converstationId এর বদলে সঠিক রিলেশন কানেক্ট করে দিলাম
+          connect: { id: conversationId },
         },
       },
       include: {

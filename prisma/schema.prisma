@@ -51,7 +51,7 @@ model ConversationUser {
 // ৩. message table chat history save 
 model Message {
   id             String       @id @default(uuid())
-  conversationId String @unique
+  conversationId String 
   senderId       String
   message        String
   createdAt      DateTime     @default(now())
