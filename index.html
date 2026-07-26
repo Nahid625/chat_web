@@ -556,23 +556,14 @@
             margin-bottom: 8px;
             font-weight: 500;
           "
-          >Start New Conversation</label
+          >Select a User to Start Chat</label
         >
-        <div style="display: flex; gap: 10px; margin-bottom: 25px">
-          <input
-            type="text"
-            id="recipientId"
-            class="glass-input"
-            placeholder="Enter Recipient User ID"
-            autocomplete="off"
-          />
-          <button
-            class="ocean-btn"
-            style="padding: 12px 20px"
-            onclick="createConversation()"
-          >
-            Create
-          </button>
+        <!-- Dynamic User List Container (Replaced text input) -->
+        <div
+          id="allUsersList"
+          style="max-height: 180px; overflow-y: auto; margin-bottom: 25px"
+        >
+          <!-- Users populate here -->
         </div>
 
         <div class="flex-between" style="margin-bottom: 12px">
@@ -589,12 +580,15 @@
           <button
             class="btn-outline-ocean"
             style="padding: 4px 10px; font-size: 0.75rem"
-            onclick="loadConversations()"
+            onclick="
+              loadConversations();
+              loadAllUsers();
+            "
           >
             Refresh
           </button>
         </div>
-        <div id="conversationList" style="max-height: 240px; overflow-y: auto">
+        <div id="conversationList" style="max-height: 200px; overflow-y: auto">
           <!-- Conversations populate here -->
         </div>
       </div>
@@ -646,12 +640,28 @@
     <script>
       // Backend configuration URLs
       const API_URL = "http://localhost:4000/api";
-      const SOCKET_URL = "https://localhost:4000";
+      const SOCKET_URL = "http://localhost:4000";
 
       const socket = io(SOCKET_URL);
       let currentConversationId = null;
       let currentUserId = null;
       let isRegisterMode = false;
+
+      // Auto-login check on page load
+      window.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("token");
+        if (token) {
+          currentUserId = getUserIdFromToken(token);
+          if (currentUserId) {
+            document.getElementById("loginSection").classList.add("hidden");
+            document
+              .getElementById("dashboardSection")
+              .classList.remove("hidden");
+            loadConversations();
+            loadAllUsers();
+          }
+        }
+      });
 
       // Toggle between Sign In and Sign Up views
       function toggleAuthMode() {
@@ -725,12 +735,10 @@
         const email = document.getElementById("emailInput").value;
         const password = document.getElementById("passwordInput").value;
 
-        // FIXED: Added /users to the login path
         let endpoint = `${API_URL}/users/login`;
         let payload = { email, password };
 
         if (isRegisterMode) {
-          // FIXED: Pointing to /users/signup based on your backend route
           endpoint = `${API_URL}/users/signup`;
           payload.name = document.getElementById("nameInput").value;
         }
@@ -759,6 +767,7 @@
               .getElementById("dashboardSection")
               .classList.remove("hidden");
             loadConversations();
+            loadAllUsers();
           } else {
             alert(data.error || data.message || "Authentication failed!");
           }
@@ -780,14 +789,60 @@
           document.getElementById("nameInput").value = "";
       }
 
-      async function createConversation() {
-        const recipientId = document.getElementById("recipientId").value;
+      // Fetch all users to display in list instead of typing ID
+      async function loadAllUsers() {
         const token = localStorage.getItem("token");
+        const usersListDiv = document.getElementById("allUsersList");
 
-        if (!recipientId) return alert("Please enter a recipient ID");
+        usersListDiv.innerHTML = `
+            <div class="skeleton-bubble" style="width: 100%;"></div>
+            <div class="skeleton-bubble" style="width: 80%;"></div>
+        `;
 
         try {
-          // FIXED: Adjusted to perfectly match your backend typo "create-converstation"
+          const res = await fetch(`${API_URL}/users/all-users`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+
+          usersListDiv.innerHTML = "";
+          const usersList =
+            data.users || data.data || (Array.isArray(data) ? data : []);
+
+          if (usersList.length > 0) {
+            usersList.forEach((user) => {
+              const userCard = document.createElement("div");
+              userCard.className = "conv-item";
+              userCard.style.display = "flex";
+              userCard.style.justifyContent = "space-between";
+              userCard.style.alignItems = "center";
+
+              userCard.innerHTML = `
+                <div>
+                  <div style="font-weight: 600; color: var(--text-main);">${user.name || "User"}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">${user.email}</div>
+                </div>
+                <button class="ocean-btn" style="padding: 6px 14px; font-size: 0.75rem;" onclick="startChat('${user.id || user._id}')">Chat</button>
+              `;
+              usersListDiv.appendChild(userCard);
+            });
+          } else {
+            usersListDiv.innerHTML =
+              "<p class='text-muted' style='text-align: center; font-size: 0.85rem; padding: 15px;'>No other users found.</p>";
+          }
+        } catch (err) {
+          console.error("Error loading users:", err);
+          usersListDiv.innerHTML =
+            "<p style='color: #ef4444; text-align: center; font-size: 0.85rem;'>Failed to load users list.</p>";
+        }
+      }
+
+      // Automatically triggered when clicking "Chat" on a user card
+      async function startChat(recipientId) {
+        const token = localStorage.getItem("token");
+        if (!recipientId) return;
+
+        try {
           const res = await fetch(`${API_URL}/chat/create-converstation`, {
             method: "POST",
             headers: {
@@ -798,8 +853,14 @@
           });
 
           if (res.ok) {
-            document.getElementById("recipientId").value = "";
             loadConversations();
+          } else {
+            const errorData = await res.json();
+            alert(
+              errorData.error ||
+                errorData.message ||
+                "Failed to create conversation",
+            );
           }
         } catch (err) {
           console.error("Create Conversation Error:", err);
@@ -812,9 +873,9 @@
 
         const listDiv = document.getElementById("conversationList");
         listDiv.innerHTML = `
-            <div class="skeleton-bubble" style="width: 100%;"></div>
-            <div class="skeleton-bubble" style="width: 80%;"></div>
-        `;
+      <div class="skeleton-bubble" style="width: 100%;"></div>
+      <div class="skeleton-bubble" style="width: 80%;"></div>
+  `;
 
         try {
           const res = await fetch(`${API_URL}/chat/get-conversations`, {
@@ -825,9 +886,28 @@
           listDiv.innerHTML = "";
           if (data.conversations && data.conversations.length > 0) {
             data.conversations.forEach((conv) => {
+              // --- NEW LOGIC: Find the other user's name ---
+              let otherName = "Unknown User";
+              if (conv.users && conv.users.length > 0) {
+                const otherParticipant = conv.users.find(
+                  (u) =>
+                    String(u.user?.id || u.userId) !== String(currentUserId),
+                );
+                if (otherParticipant) {
+                  otherName =
+                    otherParticipant.user?.name ||
+                    otherParticipant.user?.email ||
+                    "User";
+                }
+              }
+              // ---------------------------------------------
+
               const item = document.createElement("div");
               item.className = `conv-item ${conv.id === currentConversationId ? "active" : ""}`;
-              item.innerHTML = `<span style="font-size: 0.88rem; color: var(--text-main); font-weight: 500;">Chat: ${conv.id.substring(0, 14)}...</span> <span style="font-size: 0.75rem; color: var(--cyan-accent);">Open &rarr;</span>`;
+
+              // Replaced conv.id with otherName
+              item.innerHTML = `<span style="font-size: 0.88rem; color: var(--text-main); font-weight: 500;">${otherName}</span> <span style="font-size: 0.75rem; color: var(--cyan-accent);">Open &rarr;</span>`;
+
               item.onclick = () => openChatRoom(conv.id);
               listDiv.appendChild(item);
             });
@@ -841,7 +921,6 @@
             "<p style='color: #ef4444; text-align: center; font-size: 0.85rem;'>Failed to load conversations.</p>";
         }
       }
-
       async function openChatRoom(conversationId) {
         currentConversationId = conversationId;
 
@@ -894,6 +973,7 @@
         document.getElementById("dashboardSection").classList.remove("hidden");
         document.getElementById("liveMessages").innerHTML = "";
         loadConversations();
+        loadAllUsers();
       }
 
       async function sendMessage() {

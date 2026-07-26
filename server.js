@@ -10,12 +10,8 @@ const chatRouter = require("./src/routes/chat_route");
 const { Server } = require("socket.io");
 const path = require("path");
 
-
-const { initSocket } = require("./src/config/socket"); 
+const { initSocket } = require("./src/config/socket");
 const io = initSocket(expressServer);
-
-
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -106,9 +106,25 @@ const getProfile = async (req, res) => {
     return res.status(500).json({ error: "Unable to load profile" });
   }
 };
-
+// user_controller.js
+const getAllUsers = async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    // Database theke current user chara baki sob user anchi
+    const users = await prisma.user.findMany({
+      where: {
+        NOT: { id: currentUserId },
+      },
+      select: { id: true, name: true, email: true }, // password pathabo na!
+    });
+    res.status(200).json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 module.exports = {
   signup,
   login,
   getProfile,
+  getAllUsers,
 };

@@ -18,8 +18,30 @@ const createConverstation = async (req, res) => {
         .json({ error: "you cannot start a converstation with you" });
     }
 
-    // create converstation
+    // 1. Check if a conversation ALREADY exists between these two users
+    const existingConversation = await prisma.conversation.findFirst({
+      where: {
+        AND: [
+          { users: { some: { userId: currentUserId } } },
+          { users: { some: { userId: recipientId } } },
+        ],
+      },
+      include: {
+        users: {
+          include: { user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    });
 
+    // 2. If it exists, return the existing one instead of making a new one
+    if (existingConversation) {
+      return res.status(200).json({
+        message: "Conversation already exists",
+        conversation: existingConversation,
+      });
+    }
+
+    // 3. If it doesn't exist, create a new one
     const newConverstation = await prisma.conversation.create({
       data: {
         users: { create: [{ userId: currentUserId }, { userId: recipientId }] },
@@ -30,12 +52,14 @@ const createConverstation = async (req, res) => {
         },
       },
     });
+
     return res.status(201).json({
       message: "Conversation created successfully",
       conversation: newConverstation,
     });
   } catch (error) {
-    console.log(`Enternel server error ${String(error)}`);
+    console.log(`Internal server error ${String(error)}`);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 const getConverstation = async (req, res) => {
@@ -43,36 +67,37 @@ const getConverstation = async (req, res) => {
     const userId = req.user.id;
     console.log(`user Id is this ${String(userId)}`);
 
-    const [findUser, userConversations] = await prisma.$transaction([
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true },
-      }),
-      prisma.conversationUser.findMany({
-        where: { userId: userId },
-        include: {
-          conversation: {
-            include: {
-              users: {
-                include: {
-                  user: {
-                    select: { id: true, name: true, email: true },
-                  },
-                },
-              },
-              messages: {
-                take: 1,
-                orderBy: { createdAt: "desc" },
-              },
-            },
-          },
-        },
-      }),
-    ]);
+    // 1. First, check if the user exists (No transaction needed)
+    const findUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
 
     if (!findUser) {
       return res.status(404).json({ error: "User not found or unauthorized" });
     }
+
+    // 2. Since the user exists, now fetch their conversations
+    const userConversations = await prisma.conversationUser.findMany({
+      where: { userId: userId },
+      include: {
+        conversation: {
+          include: {
+            users: {
+              include: {
+                user: {
+                  select: { id: true, name: true, email: true },
+                },
+              },
+            },
+            messages: {
+              take: 1,
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
+      },
+    });
 
     return res.status(200).json({
       success: true,
