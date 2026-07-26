@@ -3,9 +3,11 @@ const router = express.Router();
 const {
   createConverstation,
   getConverstation,
+  sendMessage,
 } = require("../controller/chat_controller.js");
 const { authorize } = require("../middlewere/authMiddleware");
 
 router.post("/create-converstation", authorize, createConverstation);
-router.get("/conversations", authorize, getConverstation);
+router.get("/get-conversations", authorize, getConverstation);
+router.post("/send-message", authorize, sendMessage);
 module.exports = router;

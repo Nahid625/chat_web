@@ -1,4 +1,5 @@
 const { prisma } = require("../config/prisma_initialize");
+const { getIO } = require("../config/socket");
 
 // create converstation
 
@@ -85,7 +86,45 @@ const getConverstation = async (req, res) => {
       .json({ error: `Internal server error: ${String(error)}` });
   }
 };
+// lets make send message route
+const sendMessage = async (req, res) => {
+  try {
+    const { conversationId, text } = req.body;
+    const senderId = req.user.id;
+
+    const savedMessage = await prisma.message.create({
+      data: {
+        message: text,
+        sender: {
+          connect: { id: senderId },
+        },
+        conversation: {
+          connect: { id: conversationId }, // এখানে converstationId এর বদলে সঠিক রিলেশন কানেক্ট করে দিলাম
+        },
+      },
+      include: {
+        conversation: true,
+      },
+    });
+    // Real-time send Message to Room with help of socket
+    const io = getIO();
+
+    io.to(conversationId).emit("receive_message", savedMessage);
+    return res.status(201).json({
+      success: true,
+      message: "Message sent successfully",
+      data: savedMessage,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: `Internal Server Error: ${String(error)}` });
+  }
+};
+
 module.exports = {
   createConverstation,
-  getConverstation
+  getConverstation,
+  sendMessage,
 };

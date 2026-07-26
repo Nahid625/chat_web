@@ -3,357 +3,401 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auth & Chat Tester</title>
+    <title>Complete Chat App - Production Flow</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        background-color: #1e1e1e;
-        color: #fff;
-        padding: 20px;
+        margin: 20px;
+        background: #f4f4f9;
+        color: #333;
       }
       .container {
-        max-width: 600px;
+        max-width: 650px;
         margin: 0 auto;
       }
       .card {
-        background: #2d2d2d;
+        background: white;
         padding: 20px;
         border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
       }
-      input {
+      input,
+      button,
+      select {
         width: 100%;
         padding: 10px;
-        margin: 10px 0;
-        border: 1px solid #444;
-        border-radius: 4px;
-        background: #3d3d3d;
-        color: #fff;
+        margin: 8px 0;
         box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
       }
       button {
-        background: #4caf50;
+        background: #007bff;
         color: white;
-        padding: 10px 15px;
         border: none;
-        border-radius: 4px;
         cursor: pointer;
-        width: 100%;
-        font-size: 16px;
+        font-weight: bold;
       }
       button:hover {
-        background: #45a049;
+        background: #0056b3;
       }
-      .btn-blue {
-        background: #2196f3;
-        margin-top: 10px;
+      .hidden {
+        display: none !important;
       }
-      .btn-blue:hover {
-        background: #1976d2;
-      }
-      .btn-purple {
-        background: #9c27b0;
-        margin-top: 10px;
-      }
-      .btn-purple:hover {
-        background: #7b1fa2;
-      }
-      .btn-orange {
-        background: #ff9800;
-        margin-top: 10px;
-      }
-      .btn-orange:hover {
-        background: #f57c00;
-      }
-      #messageBox {
+      ul {
+        padding-left: 20px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
         padding: 10px;
-        margin-bottom: 20px;
+        background: #fafafa;
         border-radius: 4px;
-        display: none;
+        list-style-type: none;
       }
-      .success {
-        background: #4caf50;
-        color: white;
+      li {
+        padding: 6px 0;
+        border-bottom: 1px solid #eee;
       }
-      .error {
-        background: #f44336;
-        color: white;
+      .logout-btn {
+        background: #dc3545;
       }
-      pre {
-        background: #111;
-        padding: 10px;
-        border-radius: 4px;
-        overflow-x: auto;
+      .logout-btn:hover {
+        background: #c82333;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h2 style="text-align: center">API & Chat Tester</h2>
+      <h2>🚀 Production Ready Chat System</h2>
 
-      <!-- Message Box for Alerts -->
-      <div id="messageBox"></div>
+      <!-- STEP 1: AUTH SECTION (Signup / Login) -->
+      <div id="authSection" class="card">
+        <h3 id="formTitle">Login</h3>
+        <input type="text" id="emailInput" placeholder="Enter Email" />
+        <input
+          type="password"
+          id="passwordInput"
+          placeholder="Enter Password"
+        />
+        <button id="authBtn" onclick="handleAuth()">Login</button>
+        <p style="text-align: center; margin-top: 10px; font-size: 14px">
+          <span id="toggleText">Don't have an account?</span>
+          <a
+            href="#"
+            onclick="toggleMode()"
+            id="toggleLink"
+            style="color: #007bff; text-decoration: none"
+            >Sign Up</a
+          >
+        </p>
+      </div>
 
-      <!-- SIGNUP FORM -->
-      <div class="card">
-        <h3>Sign Up</h3>
-        <form id="signupForm">
-          <input type="text" id="signupName" placeholder="Name (Optional)" />
-          <input type="email" id="signupEmail" placeholder="Email" required />
+      <!-- STEP 2: DASHBOARD SECTION (Profile, Create Conversation, Conversations List) -->
+      <div id="dashboardSection" class="card hidden">
+        <h3>User Dashboard</h3>
+        <div
+          id="userInfo"
+          style="
+            margin-bottom: 15px;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+          "
+        >
+          Loading profile...
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Logout</button>
+
+        <hr style="margin: 20px 0" />
+
+        <!-- Create Conversation Box -->
+        <h4>Create New Conversation</h4>
+        <input
+          type="text"
+          id="recipientIdInput"
+          placeholder="Enter Recipient User ID"
+        />
+        <button onclick="createConversation()">Create Conversation</button>
+
+        <hr style="margin: 20px 0" />
+
+        <!-- My Conversations List -->
+        <h4>My Conversations</h4>
+        <button onclick="fetchConversations()">Refresh Conversations</button>
+        <ul id="conversationsList">
+          <li>Click refresh to load conversations...</li>
+        </ul>
+      </div>
+
+      <!-- STEP 3: CHAT ROOM SECTION -->
+      <div id="chatSection" class="card hidden">
+        <button
+          onclick="backToDashboard()"
+          style="background: #6c757d; width: auto; padding: 6px 12px"
+        >
+          ← Back to Dashboard
+        </button>
+        <h3 id="activeChatTitle">Chat Room</h3>
+
+        <div style="margin-top: 15px">
           <input
-            type="password"
-            id="signupPassword"
-            placeholder="Password (Min 8 chars)"
-            required
-            minlength="8"
+            type="text"
+            id="messageInput"
+            placeholder="Type a message..."
           />
-          <button type="submit">Create Account</button>
-        </form>
-      </div>
-
-      <!-- LOGIN FORM -->
-      <div class="card">
-        <h3>Log In</h3>
-        <form id="loginForm">
-          <input type="email" id="loginEmail" placeholder="Email" required />
-          <input
-            type="password"
-            id="loginPassword"
-            placeholder="Password"
-            required
-          />
-          <button type="submit">Log In</button>
-        </form>
-      </div>
-
-      <!-- PROFILE TESTER -->
-      <div class="card">
-        <h3>Test Protected Route (Get Profile)</h3>
-        <p>You must be logged in to test this.</p>
-        <button id="profileBtn" class="btn-blue">Get My Profile</button>
-        <div id="profileResult" style="margin-top: 15px; display: none">
-          <h4>Profile Data:</h4>
-          <pre id="profileData"></pre>
+          <button onclick="sendMessage()">Send Message</button>
         </div>
-      </div>
 
-      <!-- CREATE CONVERSATION TESTER -->
-      <div class="card">
-        <h3>Start Conversation</h3>
-        <p>Enter the recipient user's ID to begin a chat.</p>
-        <form id="conversationForm">
-          <input type="text" id="recipientId" placeholder="Recipient User ID" required />
-          <button type="submit" class="btn-purple">Create Conversation</button>
-        </form>
-        <div id="conversationResult" style="margin-top: 15px; display: none">
-          <h4>Conversation Data:</h4>
-          <pre id="conversationData"></pre>
-        </div>
-      </div>
-
-      <!-- GET CONVERSATIONS TESTER -->
-      <div class="card">
-        <h3>Get My Conversations</h3>
-        <p>Fetch all chat threads you belong to.</p>
-        <button id="getConversationsBtn" class="btn-orange">Load Conversations</button>
-        <div id="conversationsResult" style="margin-top: 15px; display: none">
-          <h4>Conversations List:</h4>
-          <pre id="conversationsData"></pre>
-        </div>
+        <h4>Live Messages:</h4>
+        <ul id="messagesList"></ul>
       </div>
     </div>
 
+    <!-- Socket.io CDN -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
-      // --- CONFIGURATION ---
-      const API_BASE_URL = "http://localhost:4000";
+      const BASE_URL = "http://localhost:4000";
+      let isSignupMode = false;
+      let currentConversationId = null;
 
-      // --- UI HELPER ---
-      function showMessage(msg, isError = false) {
-        const msgBox = document.getElementById("messageBox");
-        msgBox.textContent = msg;
-        msgBox.className = isError ? "error" : "success";
-        msgBox.style.display = "block";
-        setTimeout(() => (msgBox.style.display = "none"), 5000);
+      window.onload = () => {
+        const token = localStorage.getItem("token");
+        if (token) {
+          fetchProfile(token);
+        }
+      };
+
+      function toggleMode() {
+        isSignupMode = !isSignupMode;
+        document.getElementById("formTitle").innerText = isSignupMode
+          ? "Sign Up"
+          : "Login";
+        document.getElementById("authBtn").innerText = isSignupMode
+          ? "Register & Signup"
+          : "Login";
+        document.getElementById("toggleText").innerText = isSignupMode
+          ? "Already have an account?"
+          : "Don't have an account?";
+        document.getElementById("toggleLink").innerText = isSignupMode
+          ? "Login"
+          : "Sign Up";
       }
 
-      // --- SIGNUP LOGIC ---
-      document
-        .getElementById("signupForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const name = document.getElementById("signupName").value;
-          const email = document.getElementById("signupEmail").value;
-          const password = document.getElementById("signupPassword").value;
+      async function handleAuth() {
+        const email = document.getElementById("emailInput").value;
+        const password = document.getElementById("passwordInput").value;
 
-          try {
-            const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name, email, password }),
-            });
+        if (!email || !password) {
+          alert("Please enter email and password!");
+          return;
+        }
 
-            const data = await response.json();
+        const endpoint = isSignupMode
+          ? "/api/users/signup"
+          : "/api/users/login";
 
-            if (response.ok) {
-              showMessage("Signup successful! You can now log in.");
-              document.getElementById("signupForm").reset();
+        try {
+          const response = await fetch(`${BASE_URL}${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            const token = data.token || data.accessToken;
+            if (token) {
+              localStorage.setItem("token", token);
+              fetchProfile(token);
             } else {
-              showMessage(data.error || "Signup failed", true);
+              alert("Token missing in response!");
             }
-          } catch (err) {
-            showMessage("Network error. Is your server running?", true);
+          } else {
+            alert("Failed: " + (data.error || "Invalid credentials"));
           }
-        });
+        } catch (err) {
+          console.error("Auth error:", err);
+          alert("Server error during auth!");
+        }
+      }
 
-      // --- LOGIN LOGIC ---
-      document
-        .getElementById("loginForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const email = document.getElementById("loginEmail").value;
-          const password = document.getElementById("loginPassword").value;
+      async function fetchProfile(token) {
+        try {
+          const response = await fetch(`${BASE_URL}/api/users/profile`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-          try {
-            const response = await fetch(`${API_BASE_URL}/api/users/login`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password }),
-            });
+          const data = await response.json();
+          if (response.ok) {
+            document.getElementById("authSection").classList.add("hidden");
+            document
+              .getElementById("dashboardSection")
+              .classList.remove("hidden");
 
-            const data = await response.json();
-
-            if (response.ok) {
-              localStorage.setItem("token", data.token);
-              showMessage(
-                `Welcome back, ${data.user.name || "User"}! Token saved.`,
-              );
-              document.getElementById("loginForm").reset();
-            } else {
-              showMessage(data.error || "Login failed", true);
-            }
-          } catch (err) {
-            showMessage("Network error. Is your server running?", true);
+            document.getElementById("userInfo").innerHTML = `
+            <b>ID:</b> ${data.user.id} <br>
+            <b>Name:</b> ${data.user.name || "N/A"} <br>
+            <b>Email:</b> ${data.user.email}
+          `;
+            fetchConversations();
+          } else {
+            logout();
           }
-        });
+        } catch (err) {
+          console.error("Profile error:", err);
+        }
+      }
 
-      // --- GET PROFILE LOGIC (PROTECTED) ---
-      document
-        .getElementById("profileBtn")
-        .addEventListener("click", async () => {
-          const token = localStorage.getItem("token");
+      async function createConversation() {
+        const recipientId = document.getElementById("recipientIdInput").value;
+        const token = localStorage.getItem("token");
 
-          if (!token) {
-            showMessage("No token found. Please log in first!", true);
-            return;
-          }
+        if (!recipientId) {
+          alert("Please enter recipient ID!");
+          return;
+        }
 
-          try {
-            const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            });
-
-            const data = await response.json();
-            const profileResult = document.getElementById("profileResult");
-            const profileData = document.getElementById("profileData");
-
-            if (response.ok) {
-              profileData.textContent = JSON.stringify(data.user, null, 2);
-              profileResult.style.display = "block";
-              showMessage("Profile loaded successfully!");
-            } else {
-              showMessage(
-                data.error || "Failed to load profile. Token might be expired.",
-                true,
-              );
-              profileResult.style.display = "none";
-            }
-          } catch (err) {
-            showMessage("Network error. Is your server running?", true);
-          }
-        });
-
-      // --- CREATE CONVERSATION LOGIC ---
-      document
-        .getElementById("conversationForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const token = localStorage.getItem("token");
-          const recipientId = document.getElementById("recipientId").value;
-
-          if (!token) {
-            showMessage("No token found. Please log in first!", true);
-            return;
-          }
-
-          try {
-            const response = await fetch(`${API_BASE_URL}/api/chat/create-converstation`, {
+        try {
+          const response = await fetch(
+            `${BASE_URL}/api/chat/create-converstation`,
+            {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({ recipientId }),
-            });
+            },
+          );
 
-            const data = await response.json();
-            const conversationResult = document.getElementById("conversationResult");
-            const conversationData = document.getElementById("conversationData");
-
-            if (response.ok) {
-              conversationData.textContent = JSON.stringify(data.conversation, null, 2);
-              conversationResult.style.display = "block";
-              showMessage("Conversation created successfully!");
-              document.getElementById("conversationForm").reset();
-            } else {
-              showMessage(data.error || "Failed to create conversation", true);
-              conversationResult.style.display = "none";
-            }
-          } catch (err) {
-            showMessage("Network error. Is your server running?", true);
+          const data = await response.json();
+          if (response.ok) {
+            alert("Conversation created successfully!");
+            document.getElementById("recipientIdInput").value = "";
+            fetchConversations();
+          } else {
+            alert("Error: " + (data.error || "Failed to create"));
           }
-        });
-
-      // --- GET CONVERSATIONS LOGIC ---
-      document
-        .getElementById("getConversationsBtn")
-        .addEventListener("click", async () => {
-          const token = localStorage.getItem("token");
-
-          if (!token) {
-            showMessage("No token found. Please log in first!", true);
-            return;
-          }
-
-          try {
-            // Make sure your backend route matches this endpoint (e.g., router.get("/conversations", authorize, getConverstation))
-            const response = await fetch(`${API_BASE_URL}/api/chat/conversations`, {
+        } catch (err) {
+          console.error("Create conversation error:", err);
+        }
+      }
+      async function fetchConversations() {
+        const token = localStorage.getItem("token");
+        try {
+          const response = await fetch(
+            `${BASE_URL}/api/chat/get-conversations`,
+            {
               method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            });
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
 
-            const data = await response.json();
-            const conversationsResult = document.getElementById("conversationsResult");
-            const conversationsData = document.getElementById("conversationsData");
+          const data = await response.json();
+          const ul = document.getElementById("conversationsList");
+          ul.innerHTML = "";
 
-            if (response.ok) {
-              conversationsData.textContent = JSON.stringify(data.conversations, null, 2);
-              conversationsResult.style.display = "block";
-              showMessage(`Loaded ${data.count} conversation(s) successfully!`);
-            } else {
-              showMessage(data.error || "Failed to load conversations", true);
-              conversationsResult.style.display = "none";
+          if (response.ok && data.conversations) {
+            if (data.conversations.length === 0) {
+              ul.innerHTML =
+                "<li>No conversations found. Create one above!</li>";
+              return;
             }
-          } catch (err) {
-            showMessage("Network error. Is your server running?", true);
+
+            data.conversations.forEach((conv) => {
+              const li = document.createElement("li");
+              li.style.cursor = "pointer";
+              li.style.padding = "8px";
+              li.style.margin = "4px 0";
+              li.style.background = "#fff";
+              li.style.border = "1px solid #ccc";
+              li.style.borderRadius = "4px";
+
+              li.innerHTML = `<b>Conversation ID:</b> ${conv.id}`;
+              li.onclick = () => openChatRoom(conv.id);
+              ul.appendChild(li);
+            });
+          } else {
+            ul.innerHTML = "<li>Failed to load conversations</li>";
           }
-        });
+        } catch (err) {
+          console.error("Fetch conversations error:", err);
+        }
+      }
+
+      const socket = io(BASE_URL);
+
+      socket.on("connect", () => {
+        console.log("Socket connected:", socket.id);
+      });
+
+      function openChatRoom(conversationId) {
+        currentConversationId = conversationId;
+        document.getElementById("dashboardSection").classList.add("hidden");
+        document.getElementById("chatSection").classList.remove("hidden");
+        document.getElementById("activeChatTitle").innerText =
+          `Chat Room: ${conversationId}`;
+        document.getElementById("messagesList").innerHTML = "";
+
+        socket.emit("join_room", conversationId);
+      }
+
+      function backToDashboard() {
+        document.getElementById("chatSection").classList.add("hidden");
+        document.getElementById("dashboardSection").classList.remove("hidden");
+        currentConversationId = null;
+      }
+
+      async function sendMessage() {
+        const text = document.getElementById("messageInput").value;
+        const token = localStorage.getItem("token");
+
+        if (!text || !currentConversationId) {
+          alert("Type a message first!");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${BASE_URL}/api/chat/send-message`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              conversationId: currentConversationId,
+              text: text,
+            }),
+          });
+
+          const result = await response.json();
+          if (response.ok) {
+            document.getElementById("messageInput").value = "";
+          } else {
+            alert("Error: " + (result.error || "Failed to send"));
+          }
+        } catch (err) {
+          console.error("Send error:", err);
+        }
+      }
+
+      socket.on("receive_message", (data) => {
+        const ul = document.getElementById("messagesList");
+        const li = document.createElement("li");
+        li.textContent = `Message: ${data.message}`;
+        ul.appendChild(li);
+      });
+
+      function logout() {
+        localStorage.removeItem("token");
+        document.getElementById("dashboardSection").classList.add("hidden");
+        document.getElementById("chatSection").classList.add("hidden");
+        document.getElementById("authSection").classList.remove("hidden");
+      }
     </script>
   </body>
 </html>
