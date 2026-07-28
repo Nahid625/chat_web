@@ -1,0 +1,39 @@
+services:
+  # First Node.js instance on port 4000
+  chat_server_1:
+    build: .
+    container_name: chat_app_node_1
+    restart: always
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - "4000:4000"
+
+  # Second Node.js instance on port 4001 (Load Balancing)
+  chat_server_2:
+    build: .
+    container_name: chat_app_node_2
+    restart: always
+    environment:
+      - PORT=4001
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - "4001:4001"
+
+  # Nginx Reverse Proxy Container managing traffic load balancing
+  nginx_proxy:
+    image: nginx:alpine
+    container_name: chat_app_nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites-available:/etc/nginx/sites-available
+      - ./nginx/sites-enabled:/etc/nginx/sites-enabled
+    depends_on:
+      - chat_server_1
+      - chat_server_2
