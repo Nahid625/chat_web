@@ -1,29 +1,35 @@
 services:
-  # First Node.js instance on port 4000
   chat_server_1:
     build: .
-    container_name: chat_app_node_1
+    container_name: chat_server_1
     restart: always
-    environment:
-      - PORT=4000
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
     ports:
       - "4000:4000"
+    environment:
+      - PORT=4000
 
-  # Second Node.js instance on port 4001 (Load Balancing)
   chat_server_2:
     build: .
-    container_name: chat_app_node_2
+    container_name: chat_server_2
     restart: always
-    environment:
-      - PORT=4001
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
     ports:
       - "4001:4001"
+    environment:
+      - PORT=4001
 
-  # Nginx Reverse Proxy Container managing traffic load balancing
+  postgres_db:
+    image: postgres:alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: chat_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
   nginx_proxy:
     image: nginx:alpine
     container_name: chat_app_nginx
@@ -37,3 +43,6 @@ services:
     depends_on:
       - chat_server_1
       - chat_server_2
+
+volumes:
+  pgdata:
