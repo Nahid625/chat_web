@@ -649,18 +649,13 @@
 
       // Auto-login check on page load
       window.addEventListener("DOMContentLoaded", () => {
-        const token = localStorage.getItem("token");
-        if (token) {
-          currentUserId = getUserIdFromToken(token);
-          if (currentUserId) {
-            document.getElementById("loginSection").classList.add("hidden");
-            document
-              .getElementById("dashboardSection")
-              .classList.remove("hidden");
-            loadConversations();
-            loadAllUsers();
-          }
-        }
+        if (!checkAuth()) return;
+
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("dashboardSection").classList.remove("hidden");
+
+        loadConversations();
+        loadAllUsers();
       });
 
       // Toggle between Sign In and Sign Up views
@@ -803,6 +798,11 @@
           const res = await fetch(`${API_URL}/users/all-users`, {
             headers: { Authorization: `Bearer ${token}` },
           });
+          if (res.status == 401) {
+            alert("Your session has expired. Please login again.");
+            logout();
+            return;
+          }
           const data = await res.json();
 
           usersListDiv.innerHTML = "";
@@ -840,6 +840,11 @@
       // Automatically triggered when clicking "Chat" on a user card
       async function startChat(recipientId) {
         const token = localStorage.getItem("token");
+        if (res.status == 401) {
+          alert("Your session has expired. Please login again.");
+          logout();
+          return;
+        }
         if (!recipientId) return;
 
         try {
@@ -881,6 +886,11 @@
           const res = await fetch(`${API_URL}/chat/get-conversations`, {
             headers: { Authorization: `Bearer ${token}` },
           });
+          if (res.status == 401) {
+            alert("Your session has expired. Please login again.");
+            logout();
+            return;
+          }
           const data = await res.json();
 
           listDiv.innerHTML = "";
@@ -947,7 +957,11 @@
               headers: { Authorization: `Bearer ${token}` },
             },
           );
-
+          if (res.status == 401) {
+            alert("Your session has expired. Please login again.");
+            logout();
+            return;
+          }
           const data = await res.json();
           messageContainer.innerHTML = "";
 
