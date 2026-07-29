@@ -30,7 +30,7 @@ const signup = async (req, res) => {
         .json({ error: "A user with this email already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 9);
     const user = await prisma.user.create({
       data: {
         email: normalizedEmail,
@@ -80,7 +80,7 @@ const login = async (req, res) => {
     }
 
     const token = createToken(user, jwtSecret);
-    console.log("login succes");
+
     return res.status(200).json({
       message: "Login successful",
       token,

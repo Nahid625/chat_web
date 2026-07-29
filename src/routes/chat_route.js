@@ -15,4 +15,5 @@ router.post("/send-message", authorize, sendMessage);
 // Example of how the route should look:
 router.get("/messages/:conversationId", authorize, getSPCmessageList);
 
+
 module.exports = router;
