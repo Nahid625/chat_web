@@ -22,7 +22,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRouter);
 
 app.get("/", (req, res) => {
-  return res.send("welcome");
+  return res.send("Server is running ");
 });
 const PORT = process.env.PORT || 4000;
 
