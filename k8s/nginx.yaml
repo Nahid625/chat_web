@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: my-nginx:latest # <--- তোমার বানানো ইমেজ
+        image: my-nginx:latest 
         ports:
         - containerPort: 80
