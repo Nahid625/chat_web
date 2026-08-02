@@ -1,9 +1,10 @@
+# k8s/chat-4000.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chat-server-4000
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: chat-4000

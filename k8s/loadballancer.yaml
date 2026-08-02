@@ -1,0 +1,13 @@
+# k8s/loadbalancer.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-app-loadbalancer
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  selector:
+    app: nginx-proxy-pod # <--- Pointing strictly to your Nginx Reverse Proxy!
