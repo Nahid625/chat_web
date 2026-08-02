@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chat-app-ingress
+  annotations:
+    # Enables WebSocket support for Socket.io
+    nginx.ingress.kubernetes.io/websocket-services: "chat-backend"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx # Uses the cluster's installed NGINX Ingress Controller
+  rules:
+    - host: chat_web.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chat-backend # Points directly to your chat server service!
+                port:
+                  number: 4000
