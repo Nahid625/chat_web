@@ -3,17 +3,9 @@ kind: Ingress
 metadata:
   name: chat-app-ingress
   annotations:
-    nginx.ingress.kubernetes.io/websocket-services: "chat-service-4000,chat-service-4001"
+    nginx.ingress.kubernetes.io/websocket-services: "chat-service-4000"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-
-    nginx.ingress.kubernetes.io/upstream-snippet: |
-      upstream chat_backend_nodes {
-          server chat-service-4000.default.svc.cluster.local:4000;
-          server chat-service-4001.default.svc.cluster.local:4001;
-      }
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_pass http://chat-web.com;
 spec:
   ingressClassName: nginx
   rules:
